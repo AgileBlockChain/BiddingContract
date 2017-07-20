@@ -9,6 +9,7 @@ import { default as contract } from 'truffle-contract'
 import bidding_artifacts from '../../build/contracts/Bidding.json'
 
 var Bidding = contract(bidding_artifacts);
+//console.log(jsonrpc);
 
 $( document ).ready(function() {
     window.web3 = new Web3(new Web3.providers.HttpProvider("http://54.187.168.79:8545"));

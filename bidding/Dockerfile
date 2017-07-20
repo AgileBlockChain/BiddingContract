@@ -4,7 +4,6 @@ FROM node
 COPY src /src/
 WORKDIR /src/
 
-RUN npm install truffle -g && npm install
+RUN npm install -g truffle && npm install
 
 ENTRYPOINT ["sh", "launch.sh"]
-

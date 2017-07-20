@@ -2,7 +2,8 @@ version: "3.0"
 services:
   jsonrpc:
     image: harshjv/testrpc
-    command: -h 0.0.0.0
+    ports:
+      - 8545:8545
 
   explorer:
     build: explorer
