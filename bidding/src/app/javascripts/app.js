@@ -9,10 +9,11 @@ import { default as contract } from 'truffle-contract'
 import bidding_artifacts from '../../build/contracts/Bidding.json'
 
 var Bidding = contract(bidding_artifacts);
-//console.log(jsonrpc);
 
 $( document ).ready(function() {
-    window.web3 = new Web3(new Web3.providers.HttpProvider("http://54.187.168.79:8545"));
+    var jsonrpcUrl = location.hostname;
+    console.log(jsonrpcUrl);
+    window.web3 = new Web3(new Web3.providers.HttpProvider("http://"+jsonrpcUrl+"/jsonrpc"));
     Bidding.setProvider(web3.currentProvider);
     var buyerAddrs = web3.eth.accounts[2];
     var sellerAddrs = web3.eth.accounts[3];

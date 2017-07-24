@@ -32,5 +32,15 @@ module.exports = {
         }
       }
     ]
-  }
+  },
+
+  devServer: {
+     headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Headers': 'Origin, X-Requested-With, Content-Type, Accept'
+     },
+     // public:'0.0.0.0:8080',
+     // host: '0.0.0.0',
+     disableHostCheck: true   
+  }       
 }

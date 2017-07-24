@@ -2,19 +2,22 @@ version: "3.0"
 services:
   jsonrpc:
     image: harshjv/testrpc
-    ports:
-      - 8545:8545
 
   explorer:
     build: explorer
-    ports: 
-      - 8000:8000
     depends_on:
       - jsonrpc
 
   bidding:
     build: bidding
-    ports: 
-      - 8080:8080
     depends_on:
       - jsonrpc
+
+  nginx-proxy:
+    build: nginx-proxy
+    ports:
+      - 80:80
+    depends_on:
+      - jsonrpc
+      - explorer
+      - bidding

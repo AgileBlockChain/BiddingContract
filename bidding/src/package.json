@@ -5,10 +5,10 @@
   "scripts": {
     "lint": "eslint ./",
     "build": "webpack",
-    "dev": "webpack-dev-server --host 0.0.0.0 --public 54.187.168.79:8080"
+    "dev": "webpack-dev-server --host 0.0.0.0"
 
   },
-  "author": "Ijaz",
+  "author": "xyz",
   "license": "MIT",
   "devDependencies": {
     "babel-cli": "^6.22.2",
