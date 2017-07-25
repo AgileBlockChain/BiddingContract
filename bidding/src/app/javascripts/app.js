@@ -10,10 +10,8 @@ import bidding_artifacts from '../../build/contracts/Bidding.json'
 
 var Bidding = contract(bidding_artifacts);
 
-$( document ).ready(function() {
-    var jsonrpcUrl = location.hostname;
-    console.log(jsonrpcUrl);
-    window.web3 = new Web3(new Web3.providers.HttpProvider("http://"+jsonrpcUrl+"/jsonrpc"));
+window.addEventListener('load', function() {
+    window.web3 = new Web3(new Web3.providers.HttpProvider("http://"+location.hostname+"/jsonrpc"));
     Bidding.setProvider(web3.currentProvider);
     var buyerAddrs = web3.eth.accounts[2];
     var sellerAddrs = web3.eth.accounts[3];
@@ -23,7 +21,7 @@ $( document ).ready(function() {
     document.getElementById("seller_balance").innerHTML = "Seller:" +  (sellerBalance / 1000000000000000000);
 
 
-});
+})
 
 window.balance=function() {
     Bidding.deployed().then(function(instance) {
