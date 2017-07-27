@@ -1,5 +1,5 @@
 // Import the page's CSS. Webpack will know what to do with it.
-import "../stylesheets/app.css";
+//import "../stylesheets/app.css";
 
 // Import libraries we need.
 import { default as Web3} from 'web3';
@@ -19,9 +19,37 @@ window.addEventListener('load', function() {
     var sellerBalance = web3.eth.getBalance(sellerAddrs);
     document.getElementById("buyer_balance").innerHTML = "Buyer:" + (buyerBalance / 1000000000000000000);
     document.getElementById("seller_balance").innerHTML = "Seller:" +  (sellerBalance / 1000000000000000000);
-
-
+    getProjectList();
+    getBidList();
 })
+
+window.getProjectList = function() {
+    Bidding.deployed().then(function(instance) {
+    return instance.getProjectLength()}).then(function(length) {
+        console.log(length);
+        var len = length;
+        if(len > 0) {
+            var i;
+            for(i = 1; i <= len; i++) {
+                var a = Promise.resolve(getPro(i));
+            } 
+        } 
+    })
+}
+
+window.getBidList = function() {
+    Bidding.deployed().then(function(instance) {
+    return instance.getBidLength()}).then (function(length) {
+        console.log(length);
+        if (length > 0) {
+            var i;
+            for(i = 1; i <= length; i++) {
+              var a = Promise.resolve(getBid(i));
+            }
+        }
+    })
+}
+
 
 window.balance=function() {
     Bidding.deployed().then(function(instance) {
@@ -56,14 +84,16 @@ window.getPro = function(pid) {
     Bidding.deployed().then(function(instance) {
         return instance.getProject(pid)}).then(function(result) {
             var pvalue = result[2];
-            var Project_status = '';
             pvalue = pvalue / 1000000000000000000;
-            if(result[4] == 1) {
-               Project_status = "Open";
-            }
             var project_state = "";
             if (result[3]== 1) {
               project_state = "Open";
+            }
+            if (result[3]==2) {
+              project_state = "In Process";
+            }
+             if (result[3]==3) {
+              project_state = "Closed";
             }
 
             var table = document.getElementById("projectListTable");
@@ -115,8 +145,32 @@ window.getBid = function(bid) {
            var bidamount = resultbid[1];
            bidamount = bidamount / 1000000000000000000;
            var bid_state ='';
+           var disp_var = '';
+           var acceptdisp_var = '';
+           var rejectdisp_var = '';
            if(resultbid[2] == 1) {
               var bid_state = "Open";
+              acceptdisp_var = "inline-block";
+              rejectdisp_var = "inline-block";
+              disp_var = "none";
+           }
+           if(resultbid[2] == 2) {
+              var bid_state = "Accepted";
+              disp_var = "inline-block";
+              acceptdisp_var = "none";
+              rejectdisp_var = "none";
+           }
+           if(resultbid[2] == 3) {
+              var bid_state = "Rejected";
+              acceptdisp_var = "none";
+              rejectdisp_var = "none";
+              disp_var = "none";
+           }
+           if(resultbid[2] == 4) {
+              var bid_state = "Closed";
+              disp_var = 'none';
+              acceptdisp_var = "none";
+              rejectdisp_var = "none";
            }
 
            var table2 = document.getElementById("bid_list_tabel");
@@ -124,15 +178,16 @@ window.getBid = function(bid) {
            var row2 = table2.insertRow(y2);
            row2.innerHTML = '<tr> '+
                '<td >'+ resultbid[0] +'</td><td >'+ bidamount +'</td><td id = "bid_list_state'+resultbid[3]+'" >'+ bid_state +'</td>'+
-               '<td id = "action_td'+resultbid[3]+'"><button type="button" name="button" class="btn btn-success" id = "action_accept_btn'+resultbid[3]+'" onclick="acceptBid('+resultbid[3]+','+resultbid[1]+', '+resultbid[4]+')">Accept</button>'+
-               '<button type="button" name="button" class="btn btn-danger"  id = "action_reject_btn'+resultbid[3]+'" onclick="rejectBid(\''+resultbid[3]+'\','+resultbid[4]+')">Reject</button>'+
-               '<button style= "display : none;" type="button" name="button" class="btn btn-danger"  id = "action_conform_btn'+resultbid[3]+'" onclick="itemReceived(\''+resultbid[3]+'\','+resultbid[4]+')">Confirm</button>' +
+               '<td id = "action_td'+resultbid[3]+'"><button style= "display :'+acceptdisp_var+';"type="button" name="button" class="btn btn-success" id = "action_accept_btn'+resultbid[3]+'" onclick="acceptBid('+resultbid[3]+','+resultbid[1]+', '+resultbid[4]+')">Accept</button>'+
+               '<button style= "display :'+rejectdisp_var+';"type="button" name="button" class="btn btn-danger"  id = "action_reject_btn'+resultbid[3]+'" onclick="rejectBid(\''+resultbid[3]+'\','+resultbid[4]+')">Reject</button>'+
+               '<button style= "display :'+disp_var+';" type="button" name="button" class="btn btn-danger"  id = "action_conform_btn'+resultbid[3]+'" onclick="itemReceived(\''+resultbid[3]+'\','+resultbid[4]+')">Confirm</button>' +
             '</td>';
             getBalance();
        })
 }
 
 window.acceptBid = function(bid_id, bid_amount, prj_id) {
+    console.log(bid_id, bid_amount,prj_id);
     var buyerAddrs = web3.eth.accounts[2];
     var proBidAmount = bid_amount*2;
     Bidding.deployed().then(function(instance) {
@@ -153,11 +208,11 @@ window.getBidState = function(bid_id, prj_id) {
     var result_prj_id = result[1];
 
     if(bidState == 2) {
-      console.log("confimr called and accept Reject to hid");
+      console.log("confirm called");
        $('#bid_list_state'+bid_id).html( "Accepted");
        $('#action_accept_btn'+bid_id).hide();
        $('#action_reject_btn'+bid_id).hide();
-       $('#action_conform_btn'+bid_id).show();
+       $('#action_conform_btn'+bid_id).css({"display": "inline-block"});
        if (prj_state == 2) {
          $('#prj_state'+prj_id).html( "In Process");
 
@@ -167,7 +222,6 @@ window.getBidState = function(bid_id, prj_id) {
 
   })
 }
-
 
 window.rejectBid = function(bid_id,prj_id) {
     console.log("bid id : " + bid_id);
@@ -188,7 +242,7 @@ window.getRejectState = function(bid_id, prj_id) {
        console.log("if called");
        $('#action_accept_btn'+bid_id).hide();
        $('#action_reject_btn'+bid_id).hide();
-       $('#action_conform_btn'+bid_id).hide();
+       $('#action_conform_btn'+bid_id).css({"display":"none"});
        $('#bid_list_state'+bid_id).html( "Rejected");
        getBalance();
     }
@@ -199,23 +253,24 @@ window.getRejectState = function(bid_id, prj_id) {
 window.itemReceived = function(bid_id,prj_id) {
     var buyerAddrs = web3.eth.accounts[2];
      Bidding.deployed().then(function(instance) { instance.itemReceived(bid_id,prj_id, {from:buyerAddrs}) }).then(function(result) {
-        var result = itemReceive(bid_id, prj_id);
+        var res = itemReceiveState(bid_id, prj_id);
 
      })
 }
 
-window.itemReceive = function(bid_id, prj_id) {
+window.itemReceiveState = function(bid_id, prj_id) {
   Bidding.deployed().then(function(instance) {
   return instance.geitemReceived()}).then(function(result) {
     console.log(result);
+    console.log(result.toString());
     getBalance();
-    if(result[1] == 3) {
-     console.log("executes if");
-      $('#prj_state'+prj_id).html( "Closed");
-     console.log(prj_id);
-      getBalance();
+    console.log("executes if");
+    $('#prj_state'+prj_id).html( "Closed");
+    $('#bid_list_state'+bid_id).html( "Closed");
+    $('#action_conform_btn'+bid_id).css({"display":"none"});
+    console.log(prj_id);
+    getBalance();
 
-   }
   })
 }
 

@@ -4,7 +4,7 @@ contract Bidding {
 
     enum ProjectState { NULL, OPEN, INPROCESS, CLOSED }
     ProjectState public projectState;
-    enum BidState { NULL, OPEN, ACCEPTED, REJECTED }
+    enum BidState { NULL, OPEN, ACCEPTED, REJECTED, CLOSED }
     BidState public state;
     address buyerAddress;
     address sellerAddress;
@@ -13,6 +13,7 @@ contract Bidding {
         string  proname;
         string desc;
         uint price;
+        uint projectstate;
     }
 
     struct Bid {
@@ -20,7 +21,16 @@ contract Bidding {
         string name;
         uint amount;
         uint proId;
-        BidState state;
+        uint bidstate;
+    
+    }
+    
+    function getProjectLength() constant returns (uint){
+        return projectIndex.length;
+    }
+    
+    function getBidLength() constant returns (uint) {
+        return bidIndex.length;
     }
 
     mapping (uint  => Bid) bid;
@@ -32,90 +42,100 @@ contract Bidding {
 
     function createProject(string proname, string desc, uint price) {
         buyerAddress = msg.sender;
-        projectID = projectIndex.length;
+        projectID = projectIndex.length+1;
         projects[projectID].proname = proname;
         projects[projectID].desc = desc;
         projects[projectID].price = price ;
+        projects[projectID].projectstate = uint256(ProjectState.OPEN);
         projectIndex.push(projectID);
     }
 
-    function getprojectID() constant returns(uint projectId) {
+    function getprojectID() constant returns(uint) {
        return  projectID;
     }
 
     function getProject(uint _projectID )
-    public constant returns  (string proname, string desc, uint price, ProjectState, uint )  {
+    public constant returns  (string proname, string desc, uint price, uint, uint )  {
         buyerAddress = buyerAddress;
         projectID =_projectID;
         return (
             projects[projectID].proname,
             projects[projectID].desc,
             projects[projectID].price,
-            ProjectState.OPEN,
+            projects[projectID].projectstate,
             projectID
         );
     }
 
     function createBid (string name, uint proId) payable  {
-        bidID = bidIndex.length;
+        bidID = bidIndex.length+1;
         bid[bidID].bidAddress = msg.sender;
         bid[bidID].name = name;
         bid[bidID].amount = msg.value / 2;
         bid[bidID].proId = proId;
+        bid[bidID].bidstate = uint(BidState.OPEN);
         bidIndex.push(bidID);
     }
 
-    function getbidID() constant returns(uint bidId ) {
+    function getbidID() constant returns(uint) {
        return  bidID;
     }
 
     function getBid(uint bidID)
-    constant returns (string name, uint amount, BidState, uint, uint proId) {
+    constant returns (string name, uint amount, uint, uint, uint proId) {
         return (
             bid[bidID].name,
             bid[bidID].amount,
-            BidState.OPEN,
+            bid[bidID].bidstate,
             bidID,
             bid[bidID].proId
         );
     }
 
-    function getBalance(address x) returns (uint balance) {
-        return x.balance;
-    }
-
     function acceptBid(uint bidId, uint proId) payable {
+        bidID = bidId;
         if (msg.value == bid[bidID].amount*2) {
             bidID = bidId;
+            projectID = proId;
             sellerAddress = bid[bidID].bidAddress;
             sellerAddress.transfer((bid[bidID].amount)*2);
+            bid[bidID].bidstate = uint(BidState.ACCEPTED);
+            projects[projectID].projectstate = uint(ProjectState.INPROCESS);
         }
     }
 
-    function getacceptBid() constant returns(BidState, uint, ProjectState) {
-       return  (BidState.ACCEPTED, bid[bidID].proId, ProjectState.INPROCESS);
+    function getacceptBid() constant returns(uint, uint, uint) {
+       return  (
+           bid[bidID].bidstate,
+           bid[bidID].proId
+           projects[projectID].projectstate
+           );
     }
 
     function itemReceived(uint bidId, uint proId ) {
         buyerAddress == msg.sender;
         bidID = bidId;
+        projectID = proId;
         sellerAddress = bid[bidID].bidAddress;
         sellerAddress.transfer(bid[bidID].amount);
         buyerAddress.transfer(bid[bidID].amount);
+        projects[projectID].projectstate = uint(ProjectState.CLOSED);
+        bid[bidID].bidstate = uint(BidState.CLOSED);
     }
 
-    function geitemReceived() constant returns(uint, ProjectState) {
-       return  (bid[bidID].proId, ProjectState.CLOSED);
+    function geitemReceived() constant returns(uint, uint) {
+       return  (bid[bidID].proId, projects[projectID].projectstate);
     }
 
     function rejectBid(uint bidId)  {
         bidID = bidId;
         sellerAddress = bid[bidID].bidAddress;
-        sellerAddress.transfer((bid[bidID].amount)*2); 
+        sellerAddress.transfer((bid[bidID].amount)*2);
+        bid[bidID].bidstate = uint(BidState.REJECTED);
     }
 
-    function getrejectBid() constant returns(BidState) {
-       return  BidState.REJECTED;
+    function getrejectBid() constant returns(uint) {
+       return  bid[bidID].bidstate;
     }
 
 }
