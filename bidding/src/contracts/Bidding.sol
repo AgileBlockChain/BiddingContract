@@ -14,6 +14,7 @@ contract Bidding {
         string desc;
         uint price;
         uint projectstate;
+        address proAddress;
     }
 
     struct Bid {
@@ -43,6 +44,7 @@ contract Bidding {
     function createProject(string proname, string desc, uint price) {
         buyerAddress = msg.sender;
         projectID = projectIndex.length+1;
+        projects[projectID].proAddress = msg.sender;
         projects[projectID].proname = proname;
         projects[projectID].desc = desc;
         projects[projectID].price = price ;
@@ -116,6 +118,7 @@ contract Bidding {
         buyerAddress == msg.sender;
         bidID = bidId;
         projectID = proId;
+        //buyerAddress = projects[projectID].proAddress;
         sellerAddress = bid[bidID].bidAddress;
         sellerAddress.transfer(bid[bidID].amount);
         buyerAddress.transfer(bid[bidID].amount);

@@ -17,8 +17,8 @@ window.addEventListener('load', function() {
     var sellerAddrs = web3.eth.accounts[3];
     var buyerBalance = web3.eth.getBalance(buyerAddrs);
     var sellerBalance = web3.eth.getBalance(sellerAddrs);
-    document.getElementById("buyer_balance").innerHTML = "Buyer:" + (buyerBalance / 1000000000000000000);
-    document.getElementById("seller_balance").innerHTML = "Seller:" +  (sellerBalance / 1000000000000000000);
+    document.getElementById("buyer_balance").innerHTML = "Buyer:" + (buyerBalance / 1000000000000000);
+    document.getElementById("seller_balance").innerHTML = "Seller:" +  (sellerBalance / 1000000000000000);
     getProjectList();
     getBidList();
 })
@@ -64,7 +64,7 @@ window.projectCreation = function() {
     var description = document.getElementById ("pdetail").value;
     var buyerAddrs = web3.eth.accounts[2];
     var pvalue = document.getElementById("pvalue").value;
-    pvalue = pvalue * 1000000000000000000;
+    pvalue = pvalue * 1000000000000000;
     Bidding.deployed().then(function(instance) {
         return instance.createProject(projectName, description, pvalue, {from:buyerAddrs, gas:900000}) }).then(function(){
         getProjectId();
@@ -84,7 +84,7 @@ window.getPro = function(pid) {
     Bidding.deployed().then(function(instance) {
         return instance.getProject(pid)}).then(function(result) {
             var pvalue = result[2];
-            pvalue = pvalue / 1000000000000000000;
+            pvalue = pvalue / 1000000000000000;
             var project_state = "";
             if (result[3]== 1) {
               project_state = "Open";
@@ -92,7 +92,7 @@ window.getPro = function(pid) {
             if (result[3]==2) {
               project_state = "In Process";
             }
-             if (result[3]==3) {
+            if (result[3]==3) {
               project_state = "Closed";
             }
 
@@ -119,14 +119,22 @@ window.createBid = function() {
     var sellerAddrs = web3.eth.accounts[3];
     var amount = document.getElementById("bAmount").value;
     amount = amount*2;
-    amount = amount * 1000000000000000000;
+    amount = amount * 1000000000000000;
     var name = document.getElementById("bName").value;
     var prjId = document.getElementById("proId").value;
-    Bidding.deployed().then(function(instance) {
+    var sellerAddrs = web3.eth.accounts[3];
+    var sellerBalance = web3.eth.getBalance(sellerAddrs);
+    console.log("sbal"+sellerBalance);
+    console.log(amount);
+    if (sellerBalance >= amount) {
+      Bidding.deployed().then(function(instance) {
         return instance.createBid(name,prjId, {from:sellerAddrs, value:amount, gas:900000}) }).then(function(){
         getBidId();
         getBalance();
-    })
+      })
+    } else {
+        alert("Insufficient Balance");
+    }
 }
 
 window.getBidId = function() {
@@ -143,7 +151,7 @@ window.getBid = function(bid) {
        return instance.getBid(bid)}).then(function(resultbid) {
            console.log(resultbid);
            var bidamount = resultbid[1];
-           bidamount = bidamount / 1000000000000000000;
+           bidamount = bidamount / 1000000000000000;
            var bid_state ='';
            var disp_var = '';
            var acceptdisp_var = '';
@@ -190,14 +198,21 @@ window.acceptBid = function(bid_id, bid_amount, prj_id) {
     console.log(bid_id, bid_amount,prj_id);
     var buyerAddrs = web3.eth.accounts[2];
     var proBidAmount = bid_amount*2;
-    Bidding.deployed().then(function(instance) {
+    var buyerAddrs = web3.eth.accounts[2];
+    var buyerBalance = web3.eth.getBalance(buyerAddrs);
+
+    if ( buyerBalance >= proBidAmount) {
+      Bidding.deployed().then(function(instance) {
         return instance.acceptBid(bid_id,prj_id, {from:buyerAddrs, value:proBidAmount});
         getBalance();}).then(function() {
         var result = getBidState(bid_id, prj_id);
-    })
+      })
+    } else {
+      alert("Insufficient balance");
+    }
 }
 
-//After AcceptBid function this function returns the bidState
+// After AcceptBid function this function returns the bidState
 window.getBidState = function(bid_id, prj_id) {
   Bidding.deployed().then(function(instance) {
   return instance.getacceptBid()}).then(function(result) {
@@ -279,7 +294,7 @@ window.getBalance = function() {
     var sellerAddrs = web3.eth.accounts[3];
     var buyerBalance = web3.eth.getBalance(buyerAddrs);
     var sellerBalance = web3.eth.getBalance(sellerAddrs);
-    document.getElementById("buyer_balance").innerHTML = "Buyer:" + " " + (buyerBalance / 1000000000000000000);
-    document.getElementById("seller_balance").innerHTML = "Seller:" + " " + (sellerBalance / 1000000000000000000);
+    document.getElementById("buyer_balance").innerHTML = "Buyer:" + " " + (buyerBalance / 1000000000000000);
+    document.getElementById("seller_balance").innerHTML = "Seller:" + " " + (sellerBalance / 1000000000000000);
 }
 
