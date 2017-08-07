@@ -14,6 +14,8 @@ contract Bidding {
         string desc;
         uint price;
         uint projectstate;
+        address proAddress;
+        string hashAddress;
     }
 
     struct Bid {
@@ -22,6 +24,7 @@ contract Bidding {
         uint amount;
         uint proId;
         uint bidstate;
+        string bidHash;
     
     }
     
@@ -40,12 +43,14 @@ contract Bidding {
     uint [] projectIndex;
     uint projectID;
 
-    function createProject(string proname, string desc, uint price) {
+    function createProject(string proname, string desc, uint price, string hash) {
         buyerAddress = msg.sender;
         projectID = projectIndex.length+1;
+        projects[projectID].proAddress = msg.sender;
         projects[projectID].proname = proname;
         projects[projectID].desc = desc;
         projects[projectID].price = price ;
+        projects[projectID].hashAddress = hash ;
         projects[projectID].projectstate = uint256(ProjectState.OPEN);
         projectIndex.push(projectID);
     }
@@ -55,7 +60,7 @@ contract Bidding {
     }
 
     function getProject(uint _projectID )
-    public constant returns  (string proname, string desc, uint price, uint, uint )  {
+    public constant returns  (string proname, string desc, uint price, uint, uint, string hashAddress)  {
         buyerAddress = buyerAddress;
         projectID =_projectID;
         return (
@@ -63,17 +68,20 @@ contract Bidding {
             projects[projectID].desc,
             projects[projectID].price,
             projects[projectID].projectstate,
-            projectID
+            projectID,
+            projects[projectID].hashAddress
         );
     }
 
     function createBid (string name, uint proId) payable  {
         bidID = bidIndex.length+1;
+        projectID = proId;
         bid[bidID].bidAddress = msg.sender;
         bid[bidID].name = name;
         bid[bidID].amount = msg.value / 2;
         bid[bidID].proId = proId;
         bid[bidID].bidstate = uint(BidState.OPEN);
+        bid[bidID].bidHash = projects[projectID].hashAddress;
         bidIndex.push(bidID);
     }
 
@@ -116,6 +124,7 @@ contract Bidding {
         buyerAddress == msg.sender;
         bidID = bidId;
         projectID = proId;
+        buyerAddress = projects[projectID].proAddress;
         sellerAddress = bid[bidID].bidAddress;
         sellerAddress.transfer(bid[bidID].amount);
         buyerAddress.transfer(bid[bidID].amount);

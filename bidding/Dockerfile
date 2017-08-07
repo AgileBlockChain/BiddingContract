@@ -4,6 +4,6 @@ FROM node
 COPY src /src/
 WORKDIR /src/
 
-RUN npm install -g truffle && npm install && truffle compile
+RUN npm install -g truffle && npm install && npm install ipfs-api && truffle compile
 
 ENTRYPOINT ["sh", "launch.sh"]

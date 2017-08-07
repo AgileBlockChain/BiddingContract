@@ -7,6 +7,8 @@ import { default as contract } from 'truffle-contract'
 
 // Import our contract artifacts and turn them into usable abstractions.
 import bidding_artifacts from '../../build/contracts/Bidding.json'
+var ipfsAPI = require('ipfs-api')
+var ipfs = ipfsAPI('ip4/'+location.hostname+'/tcp/5001', {protocol: 'http'})
 
 var Bidding = contract(bidding_artifacts);
 
@@ -17,8 +19,8 @@ window.addEventListener('load', function() {
     var sellerAddrs = web3.eth.accounts[3];
     var buyerBalance = web3.eth.getBalance(buyerAddrs);
     var sellerBalance = web3.eth.getBalance(sellerAddrs);
-    document.getElementById("buyer_balance").innerHTML = "Buyer:" + (buyerBalance / 1000000000000000000);
-    document.getElementById("seller_balance").innerHTML = "Seller:" +  (sellerBalance / 1000000000000000000);
+    document.getElementById("buyer_balance").innerHTML = "Buyer:" + (buyerBalance / 1000000000000000);
+    document.getElementById("seller_balance").innerHTML = "Seller:" +  (sellerBalance / 1000000000000000);
     getProjectList();
     getBidList();
 })
@@ -26,7 +28,6 @@ window.addEventListener('load', function() {
 window.getProjectList = function() {
     Bidding.deployed().then(function(instance) {
     return instance.getProjectLength()}).then(function(length) {
-        console.log(length);
         var len = length;
         if(len > 0) {
             var i;
@@ -40,7 +41,6 @@ window.getProjectList = function() {
 window.getBidList = function() {
     Bidding.deployed().then(function(instance) {
     return instance.getBidLength()}).then (function(length) {
-        console.log(length);
         if (length > 0) {
             var i;
             for(i = 1; i <= length; i++) {
@@ -59,15 +59,48 @@ window.balance=function() {
     })
 }
 
-window.projectCreation = function() {
+window.projectCreation = function(hash) {
     var projectName = document.getElementById ("pname").value;
     var description = document.getElementById ("pdetail").value;
     var buyerAddrs = web3.eth.accounts[2];
-    var pvalue = document.getElementById("pvalue").value;
-    pvalue = pvalue * 1000000000000000000;
+    var pvalue = (document.getElementById("pvalue").value)*(1000000000000000);
     Bidding.deployed().then(function(instance) {
-        return instance.createProject(projectName, description, pvalue, {from:buyerAddrs, gas:900000}) }).then(function(){
+        return instance.createProject(projectName, description, pvalue, hash, {from:buyerAddrs, gas:900000}) }).then(function(){
         getProjectId();
+    })
+}
+
+window.detailsUpload = function() {
+    var toStore = document.getElementById('details').value;
+    var request = new XMLHttpRequest();
+    request.open('POST', "http://"+location.hostname+"/ipfsgateway/ipfs/", true);
+    request.setRequestHeader("Content-type", "text/plain");
+    request.send(toStore);
+    request.onreadystatechange=function() {
+      if (request.readyState==this.HEADERS_RECEIVED) {
+        var hash = request.getResponseHeader("Ipfs-Hash");
+        projectCreation(hash);
+      }
+    }
+}
+
+window.displayIpfsFile = function(hash) {
+    ipfs.cat(hash, function (err, stream) {
+      var res = '';
+
+      stream.on('data', function (chunk) {
+        res += chunk.toString()
+      })
+
+      stream.on('error', function (err) {
+        console.error('Oh nooo', err)    
+      })
+
+      stream.on('end', function () {
+        console.log('Got:', res);
+        document.getElementById('ipfsHashAddress').innerHTML="Ipfs Hash: "+hash;
+        document.getElementById('content').innerText=res;
+      })
     })
 }
 
@@ -80,11 +113,9 @@ window.getProjectId =function() {
 }
 
 window.getPro = function(pid) {
-    console.log(pid);
     Bidding.deployed().then(function(instance) {
         return instance.getProject(pid)}).then(function(result) {
-            var pvalue = result[2];
-            pvalue = pvalue / 1000000000000000000;
+            var pvalue = result[2] / 1000000000000000;
             var project_state = "";
             if (result[3]== 1) {
               project_state = "Open";
@@ -95,13 +126,13 @@ window.getPro = function(pid) {
              if (result[3]==3) {
               project_state = "Closed";
             }
-
+            var hashId = result[5];
             var table = document.getElementById("projectListTable");
             var y = $('#projectListTable tr').length;
             var row = table.insertRow(y);
             row.innerHTML = '<tr><td> <input  onclick="load_bid(\''+result[0]+'\','+result[4]+' )" type="radio" name="prj_select" value="'+result[4]+'"> </td>'+
                 '<td >'+ result[0] +'</td><td >'+ result[1] +'</td><td >'+ pvalue +'</td>'+
-                '<td id="prj_state'+result[4]+'">'+project_state+'</td>';
+                '<td id="prj_state'+result[4]+'">'+project_state+'</td>'+'<td> <button style= " type="button" name="button" data-toggle="modal" data-target="#myModal" class="btn btn-info"  id = "'+result[5]+'" onclick="displayIpfsFile(this.id)">Details</button></td>';
         });
 }
 
@@ -117,16 +148,20 @@ window.totalval = function(id) {
 
 window.createBid = function() {
     var sellerAddrs = web3.eth.accounts[3];
-    var amount = document.getElementById("bAmount").value;
-    amount = amount*2;
-    amount = amount * 1000000000000000000;
+    var amount = ((document.getElementById("bAmount").value)*2) * 1000000000000000;
     var name = document.getElementById("bName").value;
     var prjId = document.getElementById("proId").value;
-    Bidding.deployed().then(function(instance) {
-        return instance.createBid(name,prjId, {from:sellerAddrs, value:amount, gas:900000}) }).then(function(){
-        getBidId();
-        getBalance();
-    })
+    var sellerAddrs = web3.eth.accounts[3];
+    var sellerBalance = web3.eth.getBalance(sellerAddrs);
+    if (sellerBalance >= amount) {
+      Bidding.deployed().then(function(instance) {
+         return instance.createBid(name,prjId, {from:sellerAddrs, value:amount, gas:900000}) }).then(function(){
+         getBidId();
+         getBalance();
+      })
+    } else {
+      alert("Insufficient Balance");
+    }
 }
 
 window.getBidId = function() {
@@ -141,9 +176,7 @@ window.getBid = function(bid) {
    var sellerAddrs = web3.eth.accounts[3];
    Bidding.deployed().then(function(instance) {
        return instance.getBid(bid)}).then(function(resultbid) {
-           console.log(resultbid);
-           var bidamount = resultbid[1];
-           bidamount = bidamount / 1000000000000000000;
+           var bidamount = resultbid[1] / 1000000000000000;
            var bid_state ='';
            var disp_var = '';
            var acceptdisp_var = '';
@@ -187,28 +220,30 @@ window.getBid = function(bid) {
 }
 
 window.acceptBid = function(bid_id, bid_amount, prj_id) {
-    console.log(bid_id, bid_amount,prj_id);
     var buyerAddrs = web3.eth.accounts[2];
     var proBidAmount = bid_amount*2;
-    Bidding.deployed().then(function(instance) {
-        return instance.acceptBid(bid_id,prj_id, {from:buyerAddrs, value:proBidAmount});
-        getBalance();}).then(function() {
-        var result = getBidState(bid_id, prj_id);
-    })
+    var buyerAddrs = web3.eth.accounts[2];
+    var buyerBalance = web3.eth.getBalance(buyerAddrs);
+    if ( buyerBalance >= proBidAmount) {
+      Bidding.deployed().then(function(instance) {
+          return instance.acceptBid(bid_id,prj_id, {from:buyerAddrs, value:proBidAmount});
+          getBalance();}).then(function() {
+          var result = getBidState(bid_id, prj_id);
+      })
+    } else {
+      alert("Insufficient balance");
+    }
 }
 
 //After AcceptBid function this function returns the bidState
 window.getBidState = function(bid_id, prj_id) {
   Bidding.deployed().then(function(instance) {
   return instance.getacceptBid()}).then(function(result) {
-    console.log(result);
-    console.log(result.toString());
     var bidState = result[0];
     var prj_state = result[2];
     var result_prj_id = result[1];
 
     if(bidState == 2) {
-      console.log("confirm called");
        $('#bid_list_state'+bid_id).html( "Accepted");
        $('#action_accept_btn'+bid_id).hide();
        $('#action_reject_btn'+bid_id).hide();
@@ -224,7 +259,6 @@ window.getBidState = function(bid_id, prj_id) {
 }
 
 window.rejectBid = function(bid_id,prj_id) {
-    console.log("bid id : " + bid_id);
     var buyerAddrs = web3.eth.accounts[2];
     Bidding.deployed().then(function(instance) {
         return instance.rejectBid(bid_id,{from:buyerAddrs});
@@ -237,9 +271,7 @@ window.rejectBid = function(bid_id,prj_id) {
 window.getRejectState = function(bid_id, prj_id) {
   Bidding.deployed().then(function(instance) {
   return instance.getrejectBid()}).then(function(result) {
-    console.log(result);
     if(result == 3) {
-       console.log("if called");
        $('#action_accept_btn'+bid_id).hide();
        $('#action_reject_btn'+bid_id).hide();
        $('#action_conform_btn'+bid_id).css({"display":"none"});
@@ -261,14 +293,10 @@ window.itemReceived = function(bid_id,prj_id) {
 window.itemReceiveState = function(bid_id, prj_id) {
   Bidding.deployed().then(function(instance) {
   return instance.geitemReceived()}).then(function(result) {
-    console.log(result);
-    console.log(result.toString());
     getBalance();
-    console.log("executes if");
     $('#prj_state'+prj_id).html( "Closed");
     $('#bid_list_state'+bid_id).html( "Closed");
     $('#action_conform_btn'+bid_id).css({"display":"none"});
-    console.log(prj_id);
     getBalance();
 
   })
@@ -279,7 +307,7 @@ window.getBalance = function() {
     var sellerAddrs = web3.eth.accounts[3];
     var buyerBalance = web3.eth.getBalance(buyerAddrs);
     var sellerBalance = web3.eth.getBalance(sellerAddrs);
-    document.getElementById("buyer_balance").innerHTML = "Buyer:" + " " + (buyerBalance / 1000000000000000000);
-    document.getElementById("seller_balance").innerHTML = "Seller:" + " " + (sellerBalance / 1000000000000000000);
+    document.getElementById("buyer_balance").innerHTML = "Buyer:" + " " + (buyerBalance / 1000000000000000);
+    document.getElementById("seller_balance").innerHTML = "Seller:" + " " + (sellerBalance / 1000000000000000);
 }
 
