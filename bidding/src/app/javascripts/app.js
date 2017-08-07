@@ -117,13 +117,13 @@ window.getPro = function(pid) {
         return instance.getProject(pid)}).then(function(result) {
             var pvalue = result[2] / 1000000000000000;
             var project_state = "";
-            if (result[3]== 1) {
+            if (result[3] == 1) {
               project_state = "Open";
             }
-            if (result[3]==2) {
+            if (result[3] == 2) {
               project_state = "In Process";
             }
-             if (result[3]==3) {
+            if (result[3] == 3) {
               project_state = "Closed";
             }
             var hashId = result[5];
@@ -235,7 +235,7 @@ window.acceptBid = function(bid_id, bid_amount, prj_id) {
     }
 }
 
-//After AcceptBid function this function returns the bidState
+// After AcceptBid function this function returns the bidState
 window.getBidState = function(bid_id, prj_id) {
   Bidding.deployed().then(function(instance) {
   return instance.getacceptBid()}).then(function(result) {
