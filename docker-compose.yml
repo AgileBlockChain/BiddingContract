@@ -15,6 +15,7 @@ services:
     depends_on:
       - jsonrpc
   ipfs:
+    image: ${DOCKER_HUB_USER}/ipfs
     build: ipfs
     ports:
      - 5001:5001
