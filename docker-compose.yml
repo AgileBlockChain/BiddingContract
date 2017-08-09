@@ -4,11 +4,13 @@ services:
     image: harshjv/testrpc
 
   explorer:
+    image: ${DOCKER_HUB_USER}/explorer
     build: explorer
     depends_on:
       - jsonrpc
 
   bidding:
+    image: ${DOCKER_HUB_USER}/bidding
     build: bidding
     depends_on:
       - jsonrpc
@@ -17,7 +19,8 @@ services:
     ports:
      - 5001:5001
 
-  nginx-proxy:
+  scproxy:
+    image: ${DOCKER_HUB_USER}/scproxy
     build: nginx-proxy
     ports:
       - 80:80
