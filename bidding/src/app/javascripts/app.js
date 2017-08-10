@@ -59,28 +59,61 @@ window.balance=function() {
     })
 }
 
-window.projectCreation = function(hash) {
+window.projectCreation = function(dHash, fHash) {
     var projectName = document.getElementById ("pname").value;
     var description = document.getElementById ("pdetail").value;
     var buyerAddrs = web3.eth.accounts[2];
     var pvalue = (document.getElementById("pvalue").value)*(1000000000000000);
     Bidding.deployed().then(function(instance) {
-        return instance.createProject(projectName, description, pvalue, hash, {from:buyerAddrs, gas:900000}) }).then(function(){
+        return instance.createProject(projectName, description, pvalue, dHash, fHash, {from:buyerAddrs, gas:900000}) }).then(function(){
         getProjectId();
     })
 }
 
-window.detailsUpload = function() {
+window.uploads = function () {
     var toStore = document.getElementById('details').value;
-    var request = new XMLHttpRequest();
-    request.open('POST', "http://"+location.hostname+"/ipfsgateway/ipfs/", true);
-    request.setRequestHeader("Content-type", "text/plain");
-    request.send(toStore);
-    request.onreadystatechange=function() {
-      if (request.readyState==this.HEADERS_RECEIVED) {
-        var hash = request.getResponseHeader("Ipfs-Hash");
-        projectCreation(hash);
-      }
+    var file = document.getElementById('myFile').files[0];
+    if (toStore.length != 0 && file !== undefined ) {
+        var content = new Buffer (toStore);
+        var request = new XMLHttpRequest();
+        var detailsHash;
+        var fileHash;
+        request.open('POST', "http://"+location.hostname+"/ipfsgateway/ipfs/", true);
+        request.setRequestHeader("Content-type", "text/plain");
+        request.send(toStore);
+        request.onreadystatechange=function() {
+            if (request.readyState==this.HEADERS_RECEIVED) {
+              detailsHash = request.getResponseHeader("Ipfs-Hash");
+              console.log("DetailsHash:"+detailsHash);
+
+            }
+        }
+
+        var reader = new FileReader();
+        reader.onload = function (e) {
+        var fileString = e.target.result;
+          console.log(fileString);
+          const buffer = Buffer.from(fileString);
+          var request = new XMLHttpRequest();
+          request.open('POST', "http://"+location.hostname+"/ipfsgateway/ipfs/", true);
+          request.setRequestHeader("Content-type", "text/plain");
+          request.send(buffer);
+          request.onreadystatechange=function() {
+            if (request.readyState==this.HEADERS_RECEIVED) {
+              fileHash = request.getResponseHeader("Ipfs-Hash");
+              console.log("fileHash:"+fileHash);
+              setTimeout(function() {
+                projectCreation(detailsHash, fileHash);
+              },3000);
+            }
+          }
+        }
+        reader.readAsArrayBuffer(file);
+    }
+    else {
+        detailsHash = "NA";
+        fileHash = "NA";
+        projectCreation(detailsHash, fileHash);
     }
 }
 
@@ -126,13 +159,24 @@ window.getPro = function(pid) {
             if (result[3] == 3) {
               project_state = "Closed";
             }
-            var hashId = result[5];
+            var hashColumn = '';
+            if (result[5] == "NA") {
+              hashColumn = '<td>'+result[5]+'</td>';
+            } else {
+              hashColumn = '<td> <button style= " type="button" name="button" data-toggle="modal" data-target="#myModal" class="btn btn-info"  id = "'+result[5]+'" onclick="displayIpfsFile(this.id)">Info</button></td>';
+            }
+            var column = '';
+            if (result[6] == "NA") {
+              column = '<td>'+result[6]+'</td>';
+            } else {
+              column = '<td> <button style= " type="button" name="button" data-toggle="modal" data-target="#myModal" class="btn btn-info"  id = "'+result[6]+'" onclick="displayIpfsFile(this.id)">View</button></td>';
+            }
             var table = document.getElementById("projectListTable");
             var y = $('#projectListTable tr').length;
             var row = table.insertRow(y);
             row.innerHTML = '<tr><td> <input  onclick="load_bid(\''+result[0]+'\','+result[4]+' )" type="radio" name="prj_select" value="'+result[4]+'"> </td>'+
                 '<td >'+ result[0] +'</td><td >'+ result[1] +'</td><td >'+ pvalue +'</td>'+
-                '<td id="prj_state'+result[4]+'">'+project_state+'</td>'+'<td> <button style= " type="button" name="button" data-toggle="modal" data-target="#myModal" class="btn btn-info"  id = "'+result[5]+'" onclick="displayIpfsFile(this.id)">Details</button></td>';
+                '<td id="prj_state'+result[4]+'">'+project_state+hashColumn+column;
         });
 }
 

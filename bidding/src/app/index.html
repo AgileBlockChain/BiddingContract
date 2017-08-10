@@ -33,11 +33,15 @@
           Value
           <input  id="pvalue"class="form-control"type="text" name="" value="" placeholder="Enter Purchase value ">
         </div>
-        <div class ="col-xs-8" style="padding-top:10px;">
+        <div class ="col-xs-4" style="padding-top:10px;">
          <input class ="form-control" type="textarea" rows="4" cols="50" id ="details" placeholder="Detailed description">
         </div>
+        <div class ="col-xs-4" style="padding-top:10px;">
+         <input type="file" id="myFile" multiple size="50"  >
+         <p id="demo"></p>
+        </div>
         <div class="col-xs-4" style="padding-top:10px;">
-        <button class = "btn btn-info"type="button" name="button" onclick="detailsUpload()">Create Purchase</button>
+        <button class = "btn btn-info"type="button" name="button" onclick="uploads()">Create Purchase</button>
         </div>
       </div>
 
@@ -101,6 +105,7 @@
               <th> Value</th>
               <th> State</th>
               <th> Info </th>
+              <th> Attachment </th>
             </tr>
           </thead>
           <tbody>

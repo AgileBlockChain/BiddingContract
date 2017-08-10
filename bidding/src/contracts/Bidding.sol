@@ -16,6 +16,7 @@ contract Bidding {
         uint projectstate;
         address proAddress;
         string hashAddress;
+        string fileHash;
     }
 
     struct Bid {
@@ -25,6 +26,7 @@ contract Bidding {
         uint proId;
         uint bidstate;
         string bidHash;
+        string bidFileHash;
     
     }
     
@@ -43,7 +45,7 @@ contract Bidding {
     uint [] projectIndex;
     uint projectID;
 
-    function createProject(string proname, string desc, uint price, string hash) {
+    function createProject(string proname, string desc, uint price, string hash, string fileHash) {
         buyerAddress = msg.sender;
         projectID = projectIndex.length+1;
         projects[projectID].proAddress = msg.sender;
@@ -51,6 +53,7 @@ contract Bidding {
         projects[projectID].desc = desc;
         projects[projectID].price = price ;
         projects[projectID].hashAddress = hash ;
+        projects[projectID].fileHash = fileHash;
         projects[projectID].projectstate = uint256(ProjectState.OPEN);
         projectIndex.push(projectID);
     }
@@ -60,7 +63,7 @@ contract Bidding {
     }
 
     function getProject(uint _projectID )
-    public constant returns  (string proname, string desc, uint price, uint, uint, string hashAddress)  {
+    public constant returns  (string proname, string desc, uint price, uint, uint, string hashAddress, string fileHash)  {
         buyerAddress = buyerAddress;
         projectID =_projectID;
         return (
@@ -69,7 +72,8 @@ contract Bidding {
             projects[projectID].price,
             projects[projectID].projectstate,
             projectID,
-            projects[projectID].hashAddress
+            projects[projectID].hashAddress,
+            projects[projectID].fileHash
         );
     }
 
@@ -82,6 +86,7 @@ contract Bidding {
         bid[bidID].proId = proId;
         bid[bidID].bidstate = uint(BidState.OPEN);
         bid[bidID].bidHash = projects[projectID].hashAddress;
+        bid[bidID].bidFileHash = projects[projectID].fileHash;
         bidIndex.push(bidID);
     }
 
