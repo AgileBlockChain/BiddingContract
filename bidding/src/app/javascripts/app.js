@@ -72,7 +72,7 @@ window.projectCreation = function(dHash, fHash) {
 
 window.uploads = function () {
     var toStore = document.getElementById('details').value;
-    var file = document.getElementById('myFile').files[0];
+    var file = document.getElementById('inputFile').files[0];
     if (toStore.length != 0 && file !== undefined ) {
         var content = new Buffer (toStore);
         var request = new XMLHttpRequest();

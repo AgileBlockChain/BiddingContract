@@ -10,12 +10,12 @@ contract Bidding {
     address sellerAddress;
 
     struct Project {
-        string  proname;
+        string  projectName;
         string desc;
         uint price;
-        uint projectstate;
-        address proAddress;
-        string hashAddress;
+        uint projectState;
+        address projectAddress;
+        string detailsHash;
         string fileHash;
     }
 
@@ -23,7 +23,7 @@ contract Bidding {
         address bidAddress;
         string name;
         uint amount;
-        uint proId;
+        uint projectId;
         uint bidstate;
         string bidHash;
         string bidFileHash;
@@ -48,13 +48,13 @@ contract Bidding {
     function createProject(string proname, string desc, uint price, string hash, string fileHash) {
         buyerAddress = msg.sender;
         projectID = projectIndex.length+1;
-        projects[projectID].proAddress = msg.sender;
-        projects[projectID].proname = proname;
+        projects[projectID].projectAddress = msg.sender;
+        projects[projectID].projectName = proname;
         projects[projectID].desc = desc;
         projects[projectID].price = price ;
-        projects[projectID].hashAddress = hash ;
+        projects[projectID].detailsHash = hash ;
         projects[projectID].fileHash = fileHash;
-        projects[projectID].projectstate = uint256(ProjectState.OPEN);
+        projects[projectID].projectState = uint256(ProjectState.OPEN);
         projectIndex.push(projectID);
     }
 
@@ -63,16 +63,16 @@ contract Bidding {
     }
 
     function getProject(uint _projectID )
-    public constant returns  (string proname, string desc, uint price, uint, uint, string hashAddress, string fileHash)  {
+    public constant returns  (string projectName, string desc, uint price, uint, uint, string detailsHash, string fileHash)  {
         buyerAddress = buyerAddress;
         projectID =_projectID;
         return (
-            projects[projectID].proname,
+            projects[projectID].projectName,
             projects[projectID].desc,
             projects[projectID].price,
-            projects[projectID].projectstate,
+            projects[projectID].projectState,
             projectID,
-            projects[projectID].hashAddress,
+            projects[projectID].detailsHash,
             projects[projectID].fileHash
         );
     }
@@ -83,9 +83,9 @@ contract Bidding {
         bid[bidID].bidAddress = msg.sender;
         bid[bidID].name = name;
         bid[bidID].amount = msg.value / 2;
-        bid[bidID].proId = proId;
+        bid[bidID].projectId = proId;
         bid[bidID].bidstate = uint(BidState.OPEN);
-        bid[bidID].bidHash = projects[projectID].hashAddress;
+        bid[bidID].bidHash = projects[projectID].detailsHash;
         bid[bidID].bidFileHash = projects[projectID].fileHash;
         bidIndex.push(bidID);
     }
@@ -101,7 +101,7 @@ contract Bidding {
             bid[bidID].amount,
             bid[bidID].bidstate,
             bidID,
-            bid[bidID].proId
+            bid[bidID].projectId
         );
     }
 
@@ -113,15 +113,15 @@ contract Bidding {
             sellerAddress = bid[bidID].bidAddress;
             sellerAddress.transfer((bid[bidID].amount)*2);
             bid[bidID].bidstate = uint(BidState.ACCEPTED);
-            projects[projectID].projectstate = uint(ProjectState.INPROCESS);
+            projects[projectID].projectState = uint(ProjectState.INPROCESS);
         }
     }
 
     function getacceptBid() constant returns(uint, uint, uint) {
        return  (
            bid[bidID].bidstate,
-           bid[bidID].proId
-           projects[projectID].projectstate
+           bid[bidID].projectId,
+           projects[projectID].projectState
            );
     }
 
@@ -129,11 +129,11 @@ contract Bidding {
         buyerAddress == msg.sender;
         bidID = bidId;
         projectID = proId;
-        buyerAddress = projects[projectID].proAddress;
+        buyerAddress = projects[projectID].projectAddress;
         sellerAddress = bid[bidID].bidAddress;
         sellerAddress.transfer(bid[bidID].amount);
         buyerAddress.transfer(bid[bidID].amount);
-        projects[projectID].projectstate = uint(ProjectState.CLOSED);
+        projects[projectID].projectState = uint(ProjectState.CLOSED);
         bid[bidID].bidstate = uint(BidState.CLOSED);
     }
 
