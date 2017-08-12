@@ -138,7 +138,7 @@ contract Bidding {
     }
 
     function geitemReceived() constant returns(uint, uint) {
-       return  (bid[bidID].proId, projects[projectID].projectstate);
+       return  (bid[bidID].projectId, projects[projectID].projectState);
     }
 
     function rejectBid(uint bidId)  {
